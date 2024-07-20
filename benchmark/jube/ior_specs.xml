@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jube>
+  <!-- standard benchmark parameterization -->
+  <parameterset name="iorParameter">
+    <parameter name="api">POSIX</parameter>
+    <parameter name="testFile">testFile</parameter>
+    <parameter name="repetitions" type="int">1</parameter>
+    <parameter name="reorderTasksConstant" type="int">1</parameter>
+    <parameter name="taskPerNodeOffset" type="int">$taskspernode</parameter>
+    <parameter name="intraTestBarriers" type="int">1</parameter>
+    <parameter name="readFile" type="int">1</parameter>
+    <parameter name="writeFile" type="int">1</parameter>
+    <parameter name="filePerProc" type="int">0</parameter>
+    <parameter name="keepFile" type="int">0</parameter>
+    <parameter name="segmentCount" type="int">1</parameter>
+    <parameter name="blockSize">4MB</parameter>
+    <parameter name="transferSize">1MB</parameter>
+    <parameter name="verbose" type="int">1</parameter>
+    <parameter mode="python" name="ior_config_string" separator="," type="string">
+        " ".join(["-a $api",
+                  "-C" if $reorderTasksConstant else "",
+                  "-Q $taskPerNodeOffset",
+                  "-g" if $intraTestBarriers else "",
+                  "-b $blockSize",
+                  "-t $transferSize",
+                  "-i $repetitions",
+                  "-o $testFile",
+                  "-s $segmentCount",
+                  "-r" if $readFile else "",
+                  "-w" if $writeFile else "",
+                  "-k" if $keepFile else "",
+                  "-v" if $verbose else "",
+                  "-F" if $filePerProc else ""])
+    </parameter>
+  </parameterset>
+
+  <!-- pattern definition -->
+  <patternset name="pattern">
+    <pattern name="Aggregatesize"  type="string">\s*aggregate filesize\s+:\s+($jube_pat_nfp $jube_pat_nwrd)\s*</pattern>
+
+    <pattern name="WRbwmax"        unit="MiB" type="float" dotall="true">Summary of all tests:.+?write\s+(?:$jube_pat_nfp\s+){0}$jube_pat_fp</pattern>
+    <pattern name="WRbwmin"        unit="MiB" type="float" dotall="true">Summary of all tests:.+?write\s+(?:$jube_pat_nfp\s+){1}$jube_pat_fp</pattern>
+    <pattern name="WRbwmean"       unit="MiB" type="float" dotall="true">Summary of all tests:.+?write\s+(?:$jube_pat_nfp\s+){2}$jube_pat_fp</pattern>
+    <pattern name="WRbmeans"       unit="s"   type="float" dotall="true">Summary of all tests:.+?write\s+(?:$jube_pat_nfp\s+){8}$jube_pat_fp</pattern>
+
+    <pattern name="RDbwmax"        unit="MiB" type="float" dotall="true">Summary of all tests:.+?read\s+(?:$jube_pat_nfp\s+){0}$jube_pat_fp</pattern>
+    <pattern name="RDbwmin"        unit="MiB" type="float" dotall="true">Summary of all tests:.+?read\s+(?:$jube_pat_nfp\s+){1}$jube_pat_fp</pattern>
+    <pattern name="RDbwmean"       unit="MiB" type="float" dotall="true">Summary of all tests:.+?read\s+(?:$jube_pat_nfp\s+){2}$jube_pat_fp</pattern>
+    <pattern name="RDbmeans"       unit="s"   type="float" dotall="true">Summary of all tests:.+?read\s+(?:$jube_pat_nfp\s+){8}$jube_pat_fp</pattern>
+  </patternset>
+
+</jube>

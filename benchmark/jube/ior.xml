@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jube>
+
+  <include-path>
+    <path tag="test_exaEasy">config/test_exaEasy</path>
+    <path tag="test_exaHard">config/test_exaHard</path>
+    <path tag="test_exa">config/test_exa</path>
+  </include-path>
+
+  <!-- benchmark definition -->
+  <benchmark name="ior" outpath="./benchmarks">
+
+    <!-- source data -->
+    <fileset name="sources">
+      <link>../../src</link>
+      <prepare work_dir="./src/ior" tag="!skip_compile">./bootstrap</prepare>
+    </fileset>
+
+    <!-- compilation -->
+    <step name="compile">
+      <use>sources</use>
+      <do tag="!skip_compile">module load Intel ParaStationMPI</do>
+      <do work_dir="./src/ior" tag="!skip_compile">
+	# if binary already exists, remove compile artifacts
+        if [ -f src/ior ]; then
+          make distclean
+        fi
+	CC=mpicc ./configure --with-posix --with-mpiio
+        make
+      </do>
+    </step>
+
+    <!-- benchmark parameterization -->
+    <parameterset name="iorParameter" init_with="config.xml">
+      <parameter name="testFile">${testdir}/testFile</parameter>
+    </parameterset>
+
+    <!-- system configuration -->
+    <parameterset name="systemParameter" init_with="platform.xml">
+      <parameter name="testdir">IOR_${jube_wp_padid}</parameter>
+      <parameter name="env_modules">module load Intel ParaStationMPI</parameter>
+      <!-- <parameter name="nodes" type="int">1,2,4,8,16</parameter> -->
+      <parameter name="nodes" type="int">1</parameter>
+      <parameter name="taskspernode" type="int">64</parameter>
+      <parameter name="cell" tag='cell'>[bcell01|bcell02|bcell03|bcell04|bcell05|bcell06|bcell07|bcell08|bcell09|bcell10|bcell11|bcell12|bcell13|bcell14|bcell15|bcell16|bcell17|bcell18]</parameter>
+      <parameter name="constraint" tag='cell'>#SBATCH --constraint="${cell}"</parameter>
+      <parameter name="additional_job_config" tag='cell'>${constraint}</parameter>
+      <parameter name="executable">compile/src/ior/src/ior</parameter>
+      <parameter name="queue">booster</parameter>
+      <parameter name="gres">gpu:4</parameter>
+      <parameter name="args_exec">$ior_config_string</parameter>
+      <parameter name="preprocess">
+        date +'(start) %F %T (%s)'
+        mkdir -p "${testdir}"
+        ${env_modules}
+      </parameter>
+      <parameter name="postprocess">
+        date +'(finished) %F %T (%s)'
+        rm -rf "${testdir}"
+      </parameter>
+      <parameter name="outlogfile">job.log</parameter>
+      <parameter name="errlogfile">job.err</parameter>
+    </parameterset>
+
+    <!-- execution and job submission -->
+    <step name="execute" depend="compile" shared="$shared_folder" iterations="1">
+      <use from="platform.xml">executeset</use>
+      <use from="platform.xml">executesub</use>
+      <use>systemParameter</use>
+      <use>iorParameter</use>
+      <use from="platform.xml">jobfiles,chainfiles</use>
+      <do done_file="$done_file" error_file="$error_file">$chainjob_script $shared_job_info $submit_script</do>
+    </step>
+
+    <!-- analyse -->
+    <analyzer name="analyse">
+      <use from="ior_specs.xml">pattern</use>
+      <analyse step="execute">
+        <file>$outlogfile</file>
+      </analyse>
+    </analyzer>
+
+    <!-- result creation -->
+    <result>
+      <use>analyse</use>
+      <table name="result" style="csv" sort="api,nodes,tasks,blockSize,transferSize">
+        <column>nodes</column>
+        <column>tasks</column>
+        <column>api</column>
+        <column>filePerProc</column>
+        <column>Aggregatesize</column>
+        <column>blockSize</column>
+        <column>transferSize</column>
+        <column>segmentCount</column>
+        <column title="RDbwmax[MiB/s]" format=".1f">RDbwmax_max</column>
+        <column title="RDbwmean[MiB/s]" format=".1f">RDbwmean_avg</column>
+        <column title="RDbwmin[MiB/s]" format=".1f">RDbwmin_min</column>
+        <column title="RDbmeans[s]" format=".1f">RDbmeans_avg</column>
+        <column title="WRbwmax[MiB/s]" format=".1f">WRbwmax_max</column>
+        <column title="WRbwmean[MiB/s]" format=".1f">WRbwmean_avg</column>
+        <column title="WRbwmin[MiB/s]" format=".1f">WRbwmin_min</column>
+        <column title="WRbmeans[s]" format=".1f">WRbmeans_avg</column>
+      </table>
+    </result>
+  </benchmark>
+</jube>

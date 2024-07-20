@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jube>
+    <parameterset name="iorParameter" init_with="ior_specs.xml">
+        <parameter name="api">POSIX,MPIIO</parameter>
+        <parameter name="segmentCount" type="int">524288</parameter>
+        <parameter name="blockSize" type="int" mode="python">4*(1024)</parameter>
+        <parameter name="transferSize" type="int" mode="python">4*(1024)</parameter>
+        <parameter name="repetitions" type="int">3</parameter>
+        <parameter name="filePerProc" type="int" mode="python">0</parameter>
+        <parameter name="reorderTasksConstant" type="int">1</parameter>
+        <parameter name="taskPerNodeOffset" type="int">$taskspernode</parameter>
+        <parameter name="intraTestBarriers" type="int">1</parameter>
+    </parameterset>
+</jube>
